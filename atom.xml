@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title><![CDATA[冯兵的博客|内外兼修]]></title>
+  <subtitle><![CDATA[专注于计算机视觉，主攻三维重建和视觉定位，致力于成为一名合格的视觉算法工程师]]></subtitle>
+  <link href="/atom.xml" rel="self"/>
+  <link href="http://www.fengbing.net/"/>
+  <updated>2015-08-19T13:40:51.804Z</updated>
+  <id>http://www.fengbing.net/</id>
+  
+  <author>
+    <name><![CDATA[feng bing]]></name>
+    <email><![CDATA[fengbing123@gmail.com]]></email>
+  </author>
+  
+  <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[视觉里程计简单实现(2)]]></title>
+    <link href="http://www.fengbing.net/2015/08/19/%E8%A7%86%E8%A7%89%E9%87%8C%E7%A8%8B%E8%AE%A1%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B02/"/>
+    <id>http://www.fengbing.net/2015/08/19/视觉里程计简单实现2/</id>
+    <published>2015-08-19T12:44:12.000Z</published>
+    <updated>2015-08-19T13:40:51.804Z</updated>
+    <content type="html"></content>
+    <summary type="html">
+    
+    </summary>
+    
+      <category term="移动机器人" scheme="http://www.fengbing.net/tags/%E7%A7%BB%E5%8A%A8%E6%9C%BA%E5%99%A8%E4%BA%BA/"/>
+    
+      <category term="计算机视觉" scheme="http://www.fengbing.net/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/"/>
+    
+      <category term="一步步完善视觉里程计" scheme="http://www.fengbing.net/categories/%E4%B8%80%E6%AD%A5%E6%AD%A5%E5%AE%8C%E5%96%84%E8%A7%86%E8%A7%89%E9%87%8C%E7%A8%8B%E8%AE%A1/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[视觉里程计简单实现(1)]]></title>
+    <link href="http://www.fengbing.net/2015/08/17/%E8%A7%86%E8%A7%89%E9%87%8C%E7%A8%8B%E8%AE%A1%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B01/"/>
+    <id>http://www.fengbing.net/2015/08/17/视觉里程计简单实现1/</id>
+    <published>2015-08-17T12:44:12.000Z</published>
+    <updated>2015-08-21T14:18:20.489Z</updated>
+    <content type="html"><![CDATA[<p>前一篇博文中已经简单介绍了视觉里程计，这一篇中对上述过程进行进一步的阐述。</p>
+<h1 id="图像获取">图像获取</h1><p>目前主要采用<a href="http://www.cvlibs.net/datasets/kitti/eval_odometry.php" target="_blank" rel="external">KITTI</a>的数据集，采用公共数据集可以对自己的算法效率和精度进行评估。具体的获取基于OpenCV进行实现。</p>
+<h1 id="图像畸变处理">图像畸变处理</h1><p>图像在成像过程中由于镜头等相关因素会形成畸变，对于普通图像需进行畸变矫正，这个可以在对镜头进行标定的时候进行解决，具体标定可以参考<a href="http://www.vision.caltech.edu/bouguetj/calib_doc/" target="_blank" rel="external">matlab</a>或者<a href="http://docs.opencv.org/doc/tutorials/calib3d/camera_calibration/camera_calibration.html#cameracalibrationopencv" target="_blank" rel="external">opencv</a>，这边采用的KITTI数据集已经对图像进行了畸变处理，如何根据上述标定的结果对图像进行补偿失真，具体可以参考<a href="http://docs.opencv.org/modules/imgproc/doc/geometric_transformations.html#undistort" target="_blank" rel="external">OpenCV</a>中的介绍使用。</p>
+<h1 id="特征提取">特征提取</h1><p>特征提取是一个视觉问题的基础部分，虽然深度学习在特征提取问题中已经取得了不错的成果，但是在实用的角度（比如考虑效率）人工特征提取还很有必要，计算机视觉中常用的图像特征包括：点，边缘，直线，曲线等。在我们基础部分，我们主要考虑点特征，点特征也分为角点和斑点特征，对于经典的斑点特征提取SIFT，SURF等算法在执行效率上较为欠缺，目前我们主要使用<a href="http://www.edwardrosten.com/work/fast.html" target="_blank" rel="external">FAST（features from accelerated segment test）</a>特征提取算法。<br>FAST算法简单过程，假设有一个点$p$是我们要检测的点,如下图所示：<br><img src="http://7xl6tk.com1.z0.glb.clouddn.com/fast.png" alt="fast特征检测"><br>具体就是查看点$p$周围的16个点的像素值与该候选点灰度的差别是否够大（灰度值大于某个阈值），如果个数足够大（16个点中差值大于某个阈值的个数大于某个阈值，通常认为阈值为周长的四分之三），则认为该候选点位一个特征点。<br>为了获得更快的结果，作者通过对候选点周围中上下左右四点（即上图中1,5,9,13）先进行检查，这4个点中至少有3个点与候选点灰度值足够大，否则不用计算其它点，直接认为该候选点不是特征点，更详细的过程可以参考上述论文。<br>在OpenCV中可以进行简单实现，这边参考<a href="http://www.cnblogs.com/gaoxiang12/p/4633316.html" target="_blank" rel="external">一起做RGB-D SLAM(1)</a>,将项目源码整理成如下:<img src="http://7xl6tk.com1.z0.glb.clouddn.com/sourcefile.png" alt=""><br>在CMakeLists.txt添加内容如下：<br><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="title">CMAKE_MINIMUM_REQUIRED</span><span class="params">( VERSION <span class="number">2.8</span> )</span></span> #设定最小版本号</span><br><span class="line"><span class="function"><span class="title">PROJECT</span><span class="params">( mvo )</span></span> #设定工程名</span><br><span class="line"></span><br><span class="line">#设定可执行二进制文件的目录</span><br><span class="line"><span class="function"><span class="title">SET</span><span class="params">( EXECUTABLE_OUTPUT_PATH $&#123;PROJECT_SOURCE_DIR&#125;/bin)</span></span> </span><br><span class="line">#设定存放编译出来的库文件的目录</span><br><span class="line"><span class="function"><span class="title">SET</span><span class="params">( LIBRARY_OUTPUT_PATH $&#123;PROJECT_SOURCE_DIR&#125;/lib)</span></span> </span><br><span class="line"></span><br><span class="line">#并且把该目录设为连接目录</span><br><span class="line"><span class="function"><span class="title">LINK_DIRECTORIES</span><span class="params">( $&#123;PROJECT_SOURCE_DIR&#125;/lib)</span></span></span><br><span class="line">	</span><br><span class="line">#设定头文件目录</span><br><span class="line"><span class="function"><span class="title">INCLUDE_DIRECTORIES</span><span class="params">( $&#123;PROJECT_SOURCE_DIR&#125;/include)</span></span></span><br><span class="line">	</span><br><span class="line">#增加子文件夹，进行后续构建</span><br><span class="line"><span class="function"><span class="title">ADD_SUBDIRECTORY</span><span class="params">( $&#123;PROJECT_SOURCE_DIR&#125;/src)</span></span></span><br></pre></td></tr></table></figure></p>
+<p>在src文件夹中添加源文件fast_example.cpp以及文件夹内的CMakeLists.txt<br>CMakeLists.txt中添加如下：<br><figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 增加opencv的依赖</span></span><br><span class="line"><span class="keyword">FIND_PACKAGE</span>( OpenCV REQUIRED )</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加头文件</span></span><br><span class="line"><span class="keyword">INCLUDE_DIRECTORIES</span>(  <span class="envvar">$&#123;OpenCV_INCLUDE_DIRS&#125;</span>  )</span><br><span class="line"></span><br><span class="line"><span class="keyword">ADD_EXECUTABLE</span>( vo fast_example.cpp )</span><br><span class="line"><span class="keyword">TARGET_LINK_LIBRARIES</span>( vo <span class="envvar">$&#123;OpenCV_LIBS&#125;</span>  )</span><br></pre></td></tr></table></figure></p>
+<p>fast_example.cpp中添加<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="preprocessor">#<span class="keyword">include</span> &lt;vector&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="preprocessor">#<span class="keyword">include</span> &lt;opencv2/core/core.hpp&gt;</span></span><br><span class="line"><span class="preprocessor">#<span class="keyword">include</span> &lt;opencv2/features2d/features2d.hpp&gt;</span></span><br><span class="line"><span class="preprocessor">#<span class="keyword">include</span> &lt;opencv2/highgui/highgui.hpp&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> cv;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc,<span class="keyword">char</span> *argv[])</span></span><br><span class="line"></span>&#123;</span><br><span class="line">	Mat image;</span><br><span class="line">	image = imread(<span class="string">"1.jpg"</span>);</span><br><span class="line">	<span class="comment">// 存储为关键点</span></span><br><span class="line">	<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;KeyPoint&gt; keyPoints;</span><br><span class="line">	<span class="comment">// 定义特征检测</span></span><br><span class="line">	<span class="function">FastFeatureDetector <span class="title">fast</span><span class="params">(40)</span></span>;	<span class="comment">// 检测的阈值为40</span></span><br><span class="line">	<span class="comment">// 特征点检测</span></span><br><span class="line">	fast.detect(image,keyPoints);</span><br><span class="line">	drawKeypoints(image, keyPoints, image, Scalar::all(<span class="number">255</span>), DrawMatchesFlags::DRAW_OVER_OUTIMG);</span><br><span class="line">	imshow(<span class="string">"FAST feature"</span>, image);</span><br><span class="line">	waitKey(<span class="number">0</span>);</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>具体效果如图<img src="http://7xl6tk.com1.z0.glb.clouddn.com/FAST%20feature_screenshot_18.08.2015.png" alt="">：</p>
+<p>对于前面这几块是计算机视觉的基础部分，在图像拼接，图像识别，三维重建中都是基础，后期会对该部分进行进一步的扩充及完善。</p>
+<p>本文主要参考<a href="http://avisingh599.github.io/vision/monocular-vo/" target="_blank" rel="external">http://avisingh599.github.io/vision/monocular-vo/</a></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>前一篇博文中已经简单介绍了视觉里程计，这一篇中对上述过程进行进一步的阐述。</p>
+<h1 id="图像获取">图像获取</h1><p>目前主要采用<a href="http://www.cvlibs.net/datasets/kitti/eval_odometry.php]]>
+    </summary>
+    
+      <category term="移动机器人" scheme="http://www.fengbing.net/tags/%E7%A7%BB%E5%8A%A8%E6%9C%BA%E5%99%A8%E4%BA%BA/"/>
+    
+      <category term="计算机视觉" scheme="http://www.fengbing.net/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/"/>
+    
+      <category term="一步步完善视觉里程计" scheme="http://www.fengbing.net/categories/%E4%B8%80%E6%AD%A5%E6%AD%A5%E5%AE%8C%E5%96%84%E8%A7%86%E8%A7%89%E9%87%8C%E7%A8%8B%E8%AE%A1/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[视觉里程计简介]]></title>
+    <link href="http://www.fengbing.net/2015/08/16/%E8%A7%86%E8%A7%89%E9%87%8C%E7%A8%8B%E8%AE%A1%E7%AE%80%E4%BB%8B/"/>
+    <id>http://www.fengbing.net/2015/08/16/视觉里程计简介/</id>
+    <published>2015-08-16T12:44:12.000Z</published>
+    <updated>2015-08-21T14:02:25.161Z</updated>
+    <content type="html"><![CDATA[<p>这篇博客主要讲述一个简单的视觉里程计（Visual Odometry）的实现。整个流程较为简单，后续在此基础上对效率精度进一步提高。</p>
+<h1 id="什么是视觉里程计？">什么是视觉里程计？</h1><p>首先我们看一看维基百科的介绍<a href="https://en.wikipedia.org/wiki/Visual_odometry" target="_blank" rel="external">https://en.wikipedia.org/wiki/Visual_odometry</a>在机器人和计算机视觉问题中，视觉里程计就是一个通过分析处理相关图像序列来确定机器人的位置和姿态。</p>
+<p>我们知道在汽车中有一个里程计，记录着汽车行驶的距离，可能的计算方式就是通过计算车轮滚动的次数乘以轮子的周长，但是里程计会遇到精度的问题，例如轮子打滑，随着时间的增加，误差会变得越来越大。另外在我们机器人和视觉领域，不仅仅要知道行驶的距离，而且要知道机器人行驶的整个轨迹（机器人每个时刻的位置和姿态）我们记着在时间$t$时刻机器人的位置和姿态信息是($ x_t,y_t,z_t,\psi_t,\chi_t,\phi_t$)，其中$x_t,y_t,z_t$表示机器人在世界坐标系中的位置信息，$\psi_t,\chi_t,\phi_t$表示机器人的姿态，分布表示为roll($\psi_t$), pitch($\chi_t$),yaw($\phi_t$)</p>
+<p>确定机器人轨迹的方法有很多，我们这里主要讲述的是视觉里程计，正如维基百科所述，我们将一个摄像头（或多个摄像头）刚性连接到一个移动的物体上（如机器人），通过摄像头采集的视频流来确定相机的6自由度，如果使用1个摄像头，则称为单目视觉里程计，如果使用两个（或者更多）摄像机，则称为立体视觉里程计。</p>
+<h1 id="单目或立体视觉里程计">单目或立体视觉里程计</h1><p>主要阐述两者之间的优缺点，立体视觉里程计的优点在于可以估算出精确的轨迹，单目估计的轨迹存在一个比例因子，所以对于单目VO，我们可以说的是机器人在X方向上移动了一个单位，但是对于立体VO，我们可以说机器人在X方向上移动了1米。另外对于立体VO计算的轨迹通常更精确（因为提供了更多的数据），但是在有些情况下，如相见与观测物体的距离相距太远（与立体VO中的两个相机之间的距离进行对比），这样立体VO就退化为单目VO，另外考虑设备的装配，单目更有一些优势，比如在一些非常小的机器人上，(如:<a href="http://robobees.seas.harvard.edu/publications" target="_blank" rel="external">robobees</a>)</p>
+<h1 id="基本算法过程">基本算法过程</h1><p>主要阐述简单的算法过程，基于OpenCV3.0进行简单实现，后期进行扩展，对效率及精度进行一步步优化。</p>
+<h2 id="输入">输入</h2><ul>
+<li>通过摄像头获取的视频流（主要为灰度图像），记录摄像头在$t 和t+1$时刻获得的图像为$I <em> t$和$I </em> {t+1}$</li>
+<li>相机的内参,通过相机标定获得，可以通过<a href="http://www.vision.caltech.edu/bouguetj/calib_doc/" target="_blank" rel="external">matlab</a>或者<a href="http://docs.opencv.org/doc/tutorials/calib3d/camera_calibration/camera_calibration.html#cameracalibrationopencv" target="_blank" rel="external">opencv</a>计算为固定量</li>
+</ul>
+<h2 id="输出">输出</h2><ul>
+<li>计算每一帧相机的位置+姿态</li>
+</ul>
+<h2 id="基本过程">基本过程</h2><ol>
+<li>获得图像$I <em> t,I </em> {t+1}$</li>
+<li>对获得图像进行畸变处理</li>
+<li>通过FAST算法对图像$I <em> t$进行特征检测，通过KLT算法跟踪这些特征到图像$I </em> {t+1}$中，如果跟踪特征有所丢失，特征数小于某个阈值，则重新进行特征检测</li>
+<li>通过带RANSAC的5点算法来估计两幅图像的本质矩阵</li>
+<li>通过计算的本质矩阵进行估计$R,t$</li>
+<li>对尺度信息进行估计，最终确定旋转矩阵和平移向量</li>
+</ol>
+<p>接下来就对上述过程进行简单实现。</p>
+<p>本文主要参考<a href="http://avisingh599.github.io/vision/monocular-vo/" target="_blank" rel="external">http://avisingh599.github.io/vision/monocular-vo/</a></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>这篇博客主要讲述一个简单的视觉里程计（Visual Odometry）的实现。整个流程较为简单，后续在此基础上对效率精度进一步提高。</p>
+<h1 id="什么是视觉里程计？">什么是视觉里程计？</h1><p>首先我们看一看维基百科的介绍<a href="https:/]]>
+    </summary>
+    
+      <category term="移动机器人" scheme="http://www.fengbing.net/tags/%E7%A7%BB%E5%8A%A8%E6%9C%BA%E5%99%A8%E4%BA%BA/"/>
+    
+      <category term="计算机视觉" scheme="http://www.fengbing.net/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/"/>
+    
+      <category term="一步步完善视觉里程计" scheme="http://www.fengbing.net/categories/%E4%B8%80%E6%AD%A5%E6%AD%A5%E5%AE%8C%E5%96%84%E8%A7%86%E8%A7%89%E9%87%8C%E7%A8%8B%E8%AE%A1/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[个人兴趣点]]></title>
+    <link href="http://www.fengbing.net/2015/07/24/%E4%B8%AA%E4%BA%BA%E5%85%B4%E8%B6%A3%E7%82%B9/"/>
+    <id>http://www.fengbing.net/2015/07/24/个人兴趣点/</id>
+    <published>2015-07-24T15:44:12.000Z</published>
+    <updated>2015-08-17T17:31:01.939Z</updated>
+    <content type="html"><![CDATA[<p>这篇日志主要做一个测试，目前工作主要做视觉定位，采用基于图的SLAM的相关方法，主要是定位，对地图以及后续路径规划还不做要求。但对定位的精度及鲁棒性有足够要求。</p>
+<p>另外读研的研究方向是高性能计算，自己对视觉比较感兴趣，主要研究课题是基于多视图的三维重建的并行化。目前对三维重建还有部分设计，因为定位与重建很多是相通的，后续会写一些博客，大家交流。</p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>这篇日志主要做一个测试，目前工作主要做视觉定位，采用基于图的SLAM的相关方法，主要是定位，对地图以及后续路径规划还不做要求。但对定位的精度及鲁棒性有足够要求。</p>
+<p>另外读研的研究方向是高性能计算，自己对视觉比较感兴趣，主要研究课题是基于多视图的三维重建的并行化。]]>
+    </summary>
+    
+      <category term="兴趣" scheme="http://www.fengbing.net/tags/%E5%85%B4%E8%B6%A3/"/>
+    
+      <category term="计算机视觉" scheme="http://www.fengbing.net/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/"/>
+    
+      <category term="日志" scheme="http://www.fengbing.net/categories/%E6%97%A5%E5%BF%97/"/>
+    
+  </entry>
+  
+</feed>
